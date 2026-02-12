@@ -11,14 +11,14 @@ A Claude Code plugin providing production-grade skills for Solidity development.
 /plugin marketplace add max-taylor/Claude-Solidity-Skills
 
 # Install plugin
-/plugin install Claude-Solidity-Skills@solidity-skills
+/plugin install solidity-skills@Claude-Solidity-Skills
 ```
 
 Or via CLI:
 
 ```bash
 claude plugin marketplace add max-taylor/Claude-Solidity-Skills
-claude plugin install Claude-Solidity-Skills@solidity-skills
+claude plugin install solidity-skills@Claude-Solidity-Skills
 ```
 
 ### Local (for development)
