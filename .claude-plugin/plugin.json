@@ -1,0 +1,8 @@
+{
+  "name": "solidity-skills",
+  "description": "Reusable Claude Code skills for Solidity development — testing, auditing, gas optimization, and more.",
+  "version": "0.1.0",
+  "author": {
+    "name": "maxtaylor"
+  }
+}
