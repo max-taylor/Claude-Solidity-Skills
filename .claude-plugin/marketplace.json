@@ -1,0 +1,41 @@
+{
+  "name": "Claude-Solidity-Skills",
+  "owner": {
+    "name": "max-taylor"
+  },
+  "metadata": {
+    "description": "Production-grade Solidity skills for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "solidity-skills",
+      "source": "./",
+      "description": "Testing (Hardhat + Foundry), gas optimization, and security auditing skills for Solidity development. Built from 20+ industry resources.",
+      "author": {
+        "name": "max-taylor"
+      },
+      "homepage": "https://github.com/max-taylor/Claude-Solidity-Skills",
+      "repository": "https://github.com/max-taylor/Claude-Solidity-Skills",
+      "license": "MIT",
+      "keywords": [
+        "solidity",
+        "ethereum",
+        "smart-contracts",
+        "testing",
+        "foundry",
+        "hardhat",
+        "gas-optimization",
+        "security-audit"
+      ],
+      "category": "development",
+      "tags": [
+        "solidity",
+        "ethereum",
+        "testing",
+        "security",
+        "gas-optimization",
+        "web3"
+      ]
+    }
+  ]
+}
