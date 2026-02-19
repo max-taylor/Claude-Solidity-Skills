@@ -51,16 +51,16 @@ For **each** external/public function create a describe block containing tests i
 - Match the exact revert reason string or custom error signature.
 - For compound conditions (`a && b`), test each sub-condition independently.
 
-**3. Revert cases — boundary & edge cases**
+**3. Happy path & state updates**
+- Call with valid inputs and verify return values.
+- Verify all state transitions (storage writes, balance changes).
+- Verify all emitted events with exact argument matching.
+
+**4. Edge cases**
 - Zero values, empty arrays, empty bytes, address(0).
 - Max uint256 / overflow-adjacent values.
 - Boundary values: `threshold - 1`, `threshold`, `threshold + 1`.
 - Reentrancy attempts where applicable.
-
-**4. Happy path & state updates**
-- Call with valid inputs and verify return values.
-- Verify all state transitions (storage writes, balance changes).
-- Verify all emitted events with exact argument matching.
 
 ### 2c. Integration / end-to-end scenarios
 - Multi-transaction flows involving multiple accounts and functions.
@@ -114,8 +114,8 @@ describe("ContractName", function () {
   describe("#functionName", function () {
     // 1. reverts — access control
     // 2. reverts — input validation
-    // 3. reverts — boundary/edge cases
-    // 4. happy path & state updates
+    // 3. happy path & state updates
+    // 4. edge cases
   });
 });
 ```
@@ -203,15 +203,15 @@ test/
 
 ## Step 4 — Review coverage
 
-After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → e2e):
+After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → edge cases → e2e):
 
 ```
 Coverage summary:
 - Modifiers: 5/5 enforced
 - Require/revert statements: 18/18 triggered
-- Edge cases: zero values, max uint, address(0), reentrancy
 - Functions (happy path): 12/12 tested
 - Events: 8/8 verified
+- Edge cases: zero values, max uint, address(0), reentrancy
 - E2E flows: 3 lifecycle scenarios
 ```
 

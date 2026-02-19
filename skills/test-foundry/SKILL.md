@@ -51,16 +51,16 @@ For **each** external/public function create a test group containing tests in **
 - Match the exact revert reason string or custom error selector.
 - For compound conditions (`a && b`), test each sub-condition independently.
 
-**3. Revert cases — boundary & edge cases**
+**3. Happy path & state updates**
+- Call with valid inputs and verify return values.
+- Verify all state transitions (storage writes, balance changes).
+- Verify all emitted events with exact argument matching.
+
+**4. Edge cases**
 - Zero values, empty arrays, empty bytes, address(0).
 - Max uint256 / overflow-adjacent values.
 - Boundary values: `threshold - 1`, `threshold`, `threshold + 1`.
 - Reentrancy attempts where applicable.
-
-**4. Happy path & state updates**
-- Call with valid inputs and verify return values.
-- Verify all state transitions (storage writes, balance changes).
-- Verify all emitted events with exact argument matching.
 
 ### 2c. Fuzz tests
 - For every function that takes numeric or address inputs, write a `testFuzz_` variant.
@@ -354,11 +354,13 @@ function _verifyProposalState(
 
 ```solidity
 // Unit tests: test_FunctionName_Description
-// Order: reverts first, then happy path
+// Order: reverts, happy path, edge cases
 function test_Deposit_RevertsWhenPaused() public {}
 function test_Deposit_RevertsWithZeroAmount() public {}
 function test_Deposit_UpdatesBalance() public {}
 function test_Deposit_EmitsEvent() public {}
+function test_Deposit_ZeroValue() public {}
+function test_Deposit_MaxUint() public {}
 
 // Fuzz tests: testFuzz_FunctionName_Description
 function testFuzz_Deposit_AnyValidAmount(uint256 amount) public {}
@@ -372,15 +374,15 @@ function test_Fork_SwapOnUniswap() public {}
 
 ## Step 4 — Review coverage
 
-After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → fuzz → invariants → e2e):
+After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → edge cases → fuzz → invariants → e2e):
 
 ```
 Coverage summary:
 - Modifiers: 5/5 enforced
 - Require/revert statements: 18/18 triggered
-- Edge cases: zero values, max uint, address(0), reentrancy
 - Functions (happy path): 12/12 tested
 - Events: 8/8 verified
+- Edge cases: zero values, max uint, address(0), reentrancy
 - Fuzz tests: 8 functions covered
 - Invariants: 4 properties checked
 - E2E flows: 3 lifecycle scenarios
