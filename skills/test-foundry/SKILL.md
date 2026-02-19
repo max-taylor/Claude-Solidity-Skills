@@ -2,12 +2,21 @@
 name: test-foundry
 description: Generate a comprehensive Foundry/Forge test suite for a Solidity contract. Produces structured, high-coverage tests with fuzz testing, invariant testing, and fork testing following battle-tested methodology.
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash, Task
-argument-hint: <ContractName.sol or description of what to test>
+argument-hint: <ContractName.sol | functionName | ContractName.sol#42>
 ---
 
 You are a senior Solidity test engineer specializing in Foundry/Forge. Your job is to produce a **comprehensive, production-grade Forge test suite** for the contract or feature specified by the user.
 
 The user's request: $ARGUMENTS
+
+### Resolving the target
+
+The argument can be:
+- **A filename** (e.g., `Vault.sol`) — test the entire contract.
+- **A function name** (e.g., `deposit`) — find the function in the codebase, then test only that function.
+- **A file with line number** (e.g., `Vault.sol#42`) — read the file, identify the function at that line, then test only that function.
+
+When testing a single function, still read the full contract to understand state, modifiers, and dependencies — but only produce tests for the targeted function.
 
 ## Step 1 — Understand the contract
 
@@ -29,27 +38,29 @@ Organize the plan following this hierarchy. Print the plan as a checklist before
 
 ### 2b. Per-function test groups
 
-For **each** external/public function, create a test group covering:
+**Order test groups to match the contract source** — if the contract defines `initialize()`, then `deposit()`, then `withdraw()`, the test file must follow that same order. This makes it easy to cross-reference tests against the implementation.
 
-**Happy path**
-- Call with valid inputs and verify return values.
-- Verify all state transitions (storage writes, balance changes).
-- Verify all emitted events with exact argument matching.
+For **each** external/public function create a test group containing tests in **exactly this order**. This ordering is mandatory — it applies whether you are testing a full contract or a single function:
 
-**Access control & modifiers**
+**1. Revert cases — access control & modifiers**
 - Test every modifier on the function — call from unauthorized accounts and expect revert.
 - Test time-based guards, pause states, reentrancy guards.
 
-**Require/revert coverage**
+**2. Revert cases — require/input validation**
 - Trigger **every** require statement and custom error individually.
 - Match the exact revert reason string or custom error selector.
 - For compound conditions (`a && b`), test each sub-condition independently.
 
-**Boundary & edge cases**
+**3. Revert cases — boundary & edge cases**
 - Zero values, empty arrays, empty bytes, address(0).
 - Max uint256 / overflow-adjacent values.
 - Boundary values: `threshold - 1`, `threshold`, `threshold + 1`.
 - Reentrancy attempts where applicable.
+
+**4. Happy path & state updates**
+- Call with valid inputs and verify return values.
+- Verify all state transitions (storage writes, balance changes).
+- Verify all emitted events with exact argument matching.
 
 ### 2c. Fuzz tests
 - For every function that takes numeric or address inputs, write a `testFuzz_` variant.
@@ -71,7 +82,7 @@ Write a **Handler contract** that wraps the target contract to:
 - Manage multiple actors.
 - Track ghost variables for cumulative state.
 
-### 2e. Integration / multi-step scenarios
+### 2e. Integration / end-to-end scenarios
 - Multi-transaction flows involving multiple accounts and functions.
 - Full lifecycle tests (e.g., create → vote → execute → withdraw).
 - Interaction with external contracts (mock or fork as appropriate).
@@ -343,10 +354,11 @@ function _verifyProposalState(
 
 ```solidity
 // Unit tests: test_FunctionName_Description
-function test_Deposit_UpdatesBalance() public {}
-function test_Deposit_EmitsEvent() public {}
+// Order: reverts first, then happy path
 function test_Deposit_RevertsWhenPaused() public {}
 function test_Deposit_RevertsWithZeroAmount() public {}
+function test_Deposit_UpdatesBalance() public {}
+function test_Deposit_EmitsEvent() public {}
 
 // Fuzz tests: testFuzz_FunctionName_Description
 function testFuzz_Deposit_AnyValidAmount(uint256 amount) public {}
@@ -360,26 +372,18 @@ function test_Fork_SwapOnUniswap() public {}
 
 ## Step 4 — Review coverage
 
-After writing tests, assess coverage:
-
-1. Count require/revert/custom error statements in the contract. Confirm each has a dedicated test.
-2. Count events. Confirm each is tested with `vm.expectEmit`.
-3. Count modifiers. Confirm each is tested for enforcement.
-4. Identify untested branches and add tests.
-5. Note which functions have fuzz test coverage.
-6. Note which invariants are being checked.
-
-Print a brief coverage summary at the end:
+After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → fuzz → invariants → e2e):
 
 ```
 Coverage summary:
-- Functions: 12/12 tested
-- Require/revert statements: 18/18 triggered
-- Events: 8/8 verified
 - Modifiers: 5/5 enforced
+- Require/revert statements: 18/18 triggered
+- Edge cases: zero values, max uint, address(0), reentrancy
+- Functions (happy path): 12/12 tested
+- Events: 8/8 verified
 - Fuzz tests: 8 functions covered
 - Invariants: 4 properties checked
-- Edge cases: zero values, max uint, address(0), reentrancy
+- E2E flows: 3 lifecycle scenarios
 ```
 
 ## Rules

@@ -2,12 +2,21 @@
 name: test-hardhat
 description: Generate a comprehensive Hardhat test suite for a Solidity contract. Produces structured, high-coverage tests following battle-tested smart contract testing methodology.
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash, Task
-argument-hint: <ContractName.sol or description of what to test>
+argument-hint: <ContractName.sol | functionName | ContractName.sol#42>
 ---
 
 You are a senior Solidity test engineer. Your job is to produce a **comprehensive, production-grade Hardhat test suite** for the contract or feature specified by the user.
 
 The user's request: $ARGUMENTS
+
+### Resolving the target
+
+The argument can be:
+- **A filename** (e.g., `Vault.sol`) — test the entire contract.
+- **A function name** (e.g., `deposit`) — find the function in the codebase, then test only that function.
+- **A file with line number** (e.g., `Vault.sol#42`) — read the file, identify the function at that line, then test only that function.
+
+When testing a single function, still read the full contract to understand state, modifiers, and dependencies — but only produce tests for the targeted function.
 
 ## Step 1 — Understand the contract
 
@@ -29,29 +38,31 @@ Organize the plan following this hierarchy. Print the plan as a checklist before
 
 ### 2b. Per-function test groups
 
-For **each** external/public function, create a describe block covering:
+**Order test groups to match the contract source** — if the contract defines `initialize()`, then `deposit()`, then `withdraw()`, the test file must follow that same order. This makes it easy to cross-reference tests against the implementation.
 
-**Happy path**
-- Call with valid inputs and verify return values.
-- Verify all state transitions (storage writes, balance changes).
-- Verify all emitted events with exact argument matching.
+For **each** external/public function create a describe block containing tests in **exactly this order**. This ordering is mandatory — it applies whether you are testing a full contract or a single function:
 
-**Access control & modifiers**
+**1. Revert cases — access control & modifiers**
 - Test every modifier on the function — call from unauthorized accounts and expect revert.
 - Test time-based guards, pause states, reentrancy guards.
 
-**Require/revert coverage**
+**2. Revert cases — require/input validation**
 - Trigger **every** require statement individually.
 - Match the exact revert reason string or custom error signature.
 - For compound conditions (`a && b`), test each sub-condition independently.
 
-**Boundary & edge cases**
+**3. Revert cases — boundary & edge cases**
 - Zero values, empty arrays, empty bytes, address(0).
 - Max uint256 / overflow-adjacent values.
 - Boundary values: `threshold - 1`, `threshold`, `threshold + 1`.
 - Reentrancy attempts where applicable.
 
-### 2c. Integration / multi-step scenarios
+**4. Happy path & state updates**
+- Call with valid inputs and verify return values.
+- Verify all state transitions (storage writes, balance changes).
+- Verify all emitted events with exact argument matching.
+
+### 2c. Integration / end-to-end scenarios
 - Multi-transaction flows involving multiple accounts and functions.
 - Full lifecycle tests (e.g., create → vote → execute → withdraw).
 - Interaction with external contracts (mock or fork as appropriate).
@@ -99,9 +110,12 @@ describe("ContractName", function () {
     });
   });
 
-  // --- Per-function describe blocks ---
+  // --- Per-function describe blocks (match contract source order) ---
   describe("#functionName", function () {
-    // happy path, access control, reverts, edge cases
+    // 1. reverts — access control
+    // 2. reverts — input validation
+    // 3. reverts — boundary/edge cases
+    // 4. happy path & state updates
   });
 });
 ```
@@ -179,7 +193,7 @@ async function verifyProcessProposal(params: {
 
 ```
 test/
-├── ContractName.ts          # Main contract test suite
+├── ContractName.test.ts          # Main contract test suite
 ├── ContractName.fork.ts     # Mainnet fork tests (if needed)
 ├── helpers/
 │   ├── fixtures.ts          # Shared deployment fixtures
@@ -189,22 +203,16 @@ test/
 
 ## Step 4 — Review coverage
 
-After writing tests, assess coverage:
-
-1. Count require/revert statements in the contract. Confirm each has a dedicated test.
-2. Count events. Confirm each is tested with `emit` + `withArgs`.
-3. Count modifiers. Confirm each is tested for enforcement.
-4. Identify any untested branches and add tests.
-
-Print a brief coverage summary at the end:
+After writing tests, assess coverage. Print a brief coverage summary at the end **in the same order the tests are written** (reverts → happy path → e2e):
 
 ```
 Coverage summary:
-- Functions: 12/12 tested
-- Require statements: 18/18 triggered
-- Events: 8/8 verified
 - Modifiers: 5/5 enforced
+- Require/revert statements: 18/18 triggered
 - Edge cases: zero values, max uint, address(0), reentrancy
+- Functions (happy path): 12/12 tested
+- Events: 8/8 verified
+- E2E flows: 3 lifecycle scenarios
 ```
 
 ## Rules
