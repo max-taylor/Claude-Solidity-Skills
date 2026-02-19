@@ -1,6 +1,6 @@
 {
   "name": "solidity-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Production-grade Solidity skills for Claude Code — testing (Hardhat + Foundry), gas optimization, and security auditing.",
   "author": {
     "name": "max-taylor",
